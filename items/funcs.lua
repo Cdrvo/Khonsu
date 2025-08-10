@@ -1,0 +1,795 @@
+--Had to happen one day.
+
+function Khonsu.check_enhancement(area, enhancement)
+	local blss = 0
+	if area and type(area) == "table" then
+		for _, v in pairs(area) do
+			if enhancement then
+				if SMODS.has_enhancement(v, enhancement) then
+					blss = blss + 1
+				end
+			else
+				if v.ability.set == "Enhanced" then
+					blss = blss + 1
+				end
+			end
+		end
+		return blss
+	end
+	return 0
+end
+
+function Khonsu.check_edition(area, edition)
+	local blss = 0
+	if area and type(area) == "table" then
+		for _, v in pairs(area) do
+			if edition then
+				if v.edition and v.edition.key == edition then
+					blss = blss + 1
+				end
+			else
+				if v.edition then
+					blss = blss + 1
+				end
+			end
+		end
+		return blss
+	end
+	return 0
+end
+
+function Khonsu.stencil(area, to_add, _edition)
+	local tab = 0
+	local total = G.jokers.config.card_limit - #G.jokers.cards
+	local num = 0
+	for k, v in pairs(area) do
+		if _edition and v.edition then
+			if v.edition.key == _edition then
+				tab = tab + 1
+			end
+		end
+		if v.config.center.key == to_add then
+			if v.edition then
+				if v.edition.key ~= _edition then
+					tab = tab + 1
+				end
+			else
+				tab = tab + 1
+			end
+		end
+	end
+	num = total + tab
+	return num
+end
+
+function Khonsu.suitcheck(suit, area)
+	local suitcheck = 0
+	if G.playing_cards then
+		for _, v in pairs(area) do
+			if v:is_suit(suit, nil, true) then
+				suitcheck = suitcheck + 1
+			end
+		end
+		return suitcheck
+	end
+	return 0
+end
+
+function Khonsu.discard(ammount, area)
+	G.E_MANAGER:add_event(Event({
+		trigger = "before",
+		delay = 1,
+		func = function()
+			local any_selected = nil
+			local _cards = {}
+			for i = 1, #area do
+				_cards[#_cards + 1] = area[i]
+			end
+			Khonsu.discard_limit(ammount)
+			for i = 1, ammount do
+				if #area > 0 then
+					local selected_card, card_key = pseudorandom_element(_cards, pseudoseed("hook"))
+					G.hand:add_to_highlighted(selected_card, true)
+					table.remove(_cards, card_key)
+					any_selected = true
+					play_sound("card1", 1)
+				end
+			end
+			if any_selected then
+				G.FUNCS.discard_cards_from_highlighted(nil, true)
+				Khonsu.discard_limit(-ammount)
+			end
+			return true
+		end,
+	}))
+	G.E_MANAGER:add_event(Event({
+		trigger = "after",
+		delay = 1,
+		func = function()
+			if ammount > #area then
+				for i = 1, #area do
+					draw_card(G.deck, G.hand, i * 100 / #area, "up", true)
+				end
+			elseif ammount <= #area then
+				for i = 1, ammount do
+					draw_card(G.deck, G.hand, i * 100 / ammount, "up", true)
+				end
+			end
+			return true
+		end,
+	}))
+end
+
+--what the fuck is this
+function Khonsu.draw_new_hand()
+	local put = 0
+	for i = 1, #G.hand.cards do
+		draw_card(G.hand, G.discard, 1, "up", true)
+		put = put + 1
+	end
+	for i = 1, G.hand.config.card_limit do
+		draw_card(G.deck, G.hand, 1, "up", true)
+	end
+	for i = 1, put do
+		draw_card(G.discard, G.deck, 1, "up", true)
+	end
+end
+
+--Silent discard and play increase (idk if exists)
+--Taken straight from SMODS
+
+function Khonsu.discard_limit(mod)
+	G.GAME.starting_params.discard_limit = G.GAME.starting_params.discard_limit + mod
+	if G.GAME.starting_params.discard_limit < 0 then
+		sendErrorMessage("Discard limit is less than 0", "HandLimitAPI")
+	end
+	G.hand.config.highlighted_limit =
+		math.max(G.GAME.starting_params.discard_limit, G.GAME.starting_params.play_limit, 5)
+end
+
+function Khonsu.play_limit(mod)
+	G.GAME.starting_params.play_limit = G.GAME.starting_params.play_limit + mod
+	if G.GAME.starting_params.play_limit < 1 then
+		sendErrorMessage("Play limit is less than 1", "HandLimitAPI")
+	end
+	G.hand.config.highlighted_limit =
+		math.max(G.GAME.starting_params.discard_limit, G.GAME.starting_params.play_limit, 5)
+end
+
+function Khonsu.total_limit(mod, silent)
+	if silent then
+		Khonsu.discard_limit(mod)
+		Khonsu.play_limit(mod)
+	else
+		SMODS.change_discard_limit(mod)
+		SMODS.change_play_limit(mod)
+	end
+end
+
+function Khonsu.joker_limit(mod) end
+
+function Khonsu.defeat()
+	G.E_MANAGER:add_event(Event({
+		blocking = false,
+		func = function()
+			if G.STATE == G.STATES.SELECTING_HAND then
+				G.GAME.chips = G.GAME.blind.chips
+				G.STATE = G.STATES.HAND_PLAYED
+				G.STATE_COMPLETE = true
+				end_round()
+				return true
+			end
+		end,
+	}))
+end
+
+function Khonsu.find_lowest(area, reverse, card)
+	if not card then
+		if reverse then
+			local low = 1
+			local key = nil
+			for i = 1, #area do
+				if low <= area[i].base.id then
+					low = area[i].base.id
+					key = area[i]
+				end
+			end
+			return key
+		else
+			local high = 15
+			local key = nil
+			for i = 1, #area do
+				if high >= area[i].base.id then
+					high = area[i].base.id
+					key = area[i]
+				end
+			end
+			return key
+		end
+	else
+		if not reverse then
+			local high = 0
+			local key
+
+			for i = 1, #area do
+				local rcard = area
+				if rcard[i].base.times_played > high then
+					high = rcard[i].base.times_played
+					key = rcard[i]
+				end
+			end
+			return key
+		else
+			local high = 15
+			local key
+
+			for i = 1, #area do
+				local rcard = area
+				if rcard[i].base.times_played < high then
+					high = rcard[i].base.times_played
+					key = rcard[i]
+				end
+			end
+			return key
+		end
+	end
+end
+
+function Khonsu.add_tag(random, ammount, key)
+	if random and ammount then
+		local tags = {}
+		for k, v in pairs(G.P_TAGS) do
+			table.insert(tags, v.key)
+		end
+		play_sound("generic1", 0.9 + math.random() * 0.1, 0.8)
+		play_sound("holo1", 1.2 + math.random() * 0.1, 0.4)
+		for i = 1, ammount do
+			G.E_MANAGER:add_event(Event({
+				func = function()
+					add_tag(Tag(pseudorandom_element(tags, pseudoseed("jud_add_tag"))))
+					return true
+				end,
+			}))
+		end
+	elseif key then
+		play_sound("generic1", 0.9 + math.random() * 0.1, 0.8)
+		play_sound("holo1", 1.2 + math.random() * 0.1, 0.4)
+		for i = 1, ammount do
+			G.E_MANAGER:add_event(Event({
+				func = function()
+					add_tag(Tag(key))
+					return true
+				end,
+			}))
+		end
+	end
+end
+
+function Khonsu.random_joker(area, exclude_card)
+	local jokers = {}
+	for i = 1, #area do
+		if area[i] ~= exclude_card then
+			jokers[#jokers + 1] = area[i]
+		end
+	end
+	local result = pseudorandom_element(jokers, pseudoseed("jud_random_joker"))
+	return result
+end
+
+function Khonsu.wheeloffortune(odds, area)
+	local jokas = {}
+	if pseudorandom("wof") < G.GAME.probabilities.normal / odds then
+		for i = 1, #area do
+			if not area[i].edition then
+				jokas[#jokas + 1] = area[i]
+			end
+		end
+		Khonsu.random_joker(jokas):set_edition(poll_edition("wheel_of_fortune", nil, true, true))
+	end
+end
+
+function Khonsu.level_up_hand(hand, level)
+	update_hand_text({ sound = "button", volume = 0.7, pitch = 0.8, delay = 0.3 }, {
+		handname = localize(hand, "poker_hands"),
+		chips = G.GAME.hands[hand].chips,
+		mult = G.GAME.hands[hand].mult,
+		level = G.GAME.hands[hand].level,
+	})
+	level_up_hand(used_consumable, hand, nil, level)
+	update_hand_text({ sound = "button", volume = 0.7, pitch = 1.1, delay = 0 }, {
+		mult = 0,
+		chips = 0,
+		handname = localize(hand, "poker_hands"),
+		level = G.GAME.hands[hand].level,
+	})
+end
+
+function Khonsu.most_played()
+	local _hand, _tally = nil, -1
+	for k, v in ipairs(G.handlist) do
+		if G.GAME.hands[v].visible and G.GAME.hands[v].played > _tally then
+			_hand = v
+			_tally = G.GAME.hands[v].played
+		end
+	end
+	return _hand
+end
+
+function Khonsu.create_booster(pack)
+	local key = pack
+	local card = Card(
+		G.play.T.x + G.play.T.w / 2 - G.CARD_W * 1.27 / 2,
+		G.play.T.y + G.play.T.h / 2 - G.CARD_H * 1.27 / 2,
+		G.CARD_W * 1.27,
+		G.CARD_H * 1.27,
+		G.P_CARDS.empty,
+		G.P_CENTERS[key],
+		{ bypass_discovery_center = true, bypass_discovery_ui = true }
+	)
+	card.cost = 0
+	G.FUNCS.use_card({ config = { ref_table = card } })
+	card:start_materialize()
+	return true
+end
+
+function Khonsu.facepool(exclude)
+	if not exclude then
+		exclude = "1"
+	end
+	local faces = {}
+	for _, v in ipairs(SMODS.Rank.obj_buffer) do
+		local r = SMODS.Ranks[v]
+		if r.face and r.key ~= exclude then
+			table.insert(faces, r)
+		end
+	end
+	return faces
+end
+
+function Khonsu.remove_all(area)
+	for _, v in pairs(area) do
+		if #area > 0 then
+			SMODS.destroy_cards(v)
+		end
+	end
+end
+
+function Khonsu.crash()
+	G.E_MANAGER:add_event(Event({
+		trigger = "immediate",
+		func = function()
+			error(message or "Force Crash")
+		end,
+	}))
+end
+
+function Khonsu.shop_card(with, replace, set, keep, rarity, specific)
+	local c = false
+	if replace and set or rarity then
+		local inshop = {}
+		if set then
+			for i = 1, #G.shop_jokers.cards do
+				if G.shop_jokers.cards[i].ability.set == set then
+					inshop[#inshop + 1] = G.shop_jokers.cards[i]
+				end
+			end
+		elseif rarity then
+			for i = 1, #G.shop_jokers.cards do
+				if G.shop_jokers.cards[i].config.center.rarity == rarity then
+					inshop[#inshop + 1] = G.shop_jokers.cards[i]
+				end
+			end
+		end
+		if #inshop > 0 then
+			if keep then
+				if not specific then
+					local ca = pseudorandom_element(inshop)
+					ca:juice_up()
+					ca:set_ability(with.key)
+				else
+					local ca = pseudorandom_element(inshop)
+					ca:juice_up()
+					ca:set_ability(with)
+				end
+			else
+				SMODS.destroy_cards(pseudorandom_element(inshop), true, true)
+			end
+			c = true
+		else
+			c = false
+		end
+	end
+	if not replace then
+		local carde = SMODS.create_card({
+			key = with.key,
+			area = G.shop_jokers,
+			skip_materialize = true,
+		})
+		create_shop_card_ui(carde, "Joker", G.shop_jokers)
+		carde.states.visible = false
+		carde:start_materialize()
+		carde.ability.couponed = true
+		carde:set_cost()
+		G.shop_jokers:emplace(carde)
+	end
+end
+
+function Khonsu.index(table, cards)
+	for i, v in ipairs(table) do
+		if v == cards then
+			return i
+		end
+	end
+	return nil
+end
+
+--ok you see nothing. there is nothing for 241 lines
+-- _flip does nothing currently
+function Khonsu.replacecards(area, replace, bypass_eternal, keep, keeporiginal, _flip) --Cards not keeping editions/seals/stickers is intended. //Probably extremely inefficient /// Like why tf did i make the keep n entire seperate section. I probably wont even use "replace" or teh destruction part of this like ever.
+	if G.shop_booster and area == G.shop_booster.cards or G.shop_vouchers and area == G.shop_vouchers.cards then --Setting the area as these 2 disables the entire thing below and will not have a support for them anytime soon cause NONE of the jokers does anything with destroyed booster PACKS and VOUCHERS. Including mods
+		if area == G.shop_booster.cards then
+			for i = 1, #area do
+				local tab = {}
+				for i = 1, #G.P_CENTER_POOLS.Booster do
+					tab[#tab + 1] = G.P_CENTER_POOLS.Booster[i].key
+				end
+				if area[i] ~= keeporiginal and area[i].ability.set == "Booster" then
+					area[i]:juice_up()
+					area[i]:set_ability(pseudorandom_element(tab))
+				end
+				tab = {}
+			end
+		end
+		if area == G.shop_vouchers.cards then
+			for i = 1, #area do
+				local tab = {}
+				for i = 1, #G.P_CENTER_POOLS.Voucher do
+					tab[#tab + 1] = G.P_CENTER_POOLS.Voucher[i].key
+				end
+				if area[i] ~= keeporiginal and area[i].ability.set == "Voucher" then
+					area[i]:juice_up()
+					area[i]:set_ability(pseudorandom_element(tab))
+				end
+				tab = {}
+			end
+		end
+	else
+		if keep then
+			for i = 1, #area do
+				if area[i].config.center.rarity then
+					local b
+					local rarity
+					if not replace then
+						for k, v in pairs(G.P_JOKER_RARITY_POOLS) do
+							if area[i].config.center.rarity == k then
+								rarity = k
+								b = k
+							end
+						end
+						if rarity == 1 then
+							rarity = "Common"
+						elseif rarity == 2 then
+							rarity = "Uncommon"
+						elseif rarity == 3 then
+							rarity = "Rare"
+						elseif rarity == 4 then
+							rarity = "Legendary"
+						end
+						local set = area[i].ability.set
+						local tab = {}
+						for i = 1, #G.P_CENTER_POOLS.Joker do
+							if G.P_CENTER_POOLS.Joker[i].rarity == b then
+								tab[#tab + 1] = G.P_CENTER_POOLS.Joker[i].key
+							end
+						end
+						if area[i] ~= keeporiginal then
+							area[i]:juice_up()
+							area[i]:set_ability(pseudorandom_element(tab))
+							tab = {}
+						end
+					else
+						local set = area[i].ability.set
+						local rarity = SMODS.poll_rarity(set)
+						local b = rarity
+						if rarity == 1 then
+							rarity = "Common"
+						elseif rarity == 2 then
+							rarity = "Uncommon"
+						elseif rarity == 3 then
+							rarity = "Rare"
+						elseif rarity == 4 then
+							rarity = "Legendary"
+						end
+						local tab = {}
+						for i = 1, #G.P_CENTER_POOLS.Joker do
+							if G.P_CENTER_POOLS.Joker[i].rarity == b then
+								tab[#tab + 1] = G.P_CENTER_POOLS.Joker[i].key
+							end
+						end
+						if area[i] ~= keeporiginal then
+							area[i]:juice_up()
+							area[i]:set_ability(pseudorandom_element(tab))
+						end
+						tab = {}
+					end
+				elseif area[i].ability.set then
+					local set = area[i].ability.set
+					local tab = {}
+					if
+						area[i].ability.set == "Enhanced"
+						or area[i].ability.set == "Default"
+						or area[i].ability.set == "Playing Card"
+						or area == G.hand.cards
+					then
+						area[i]:juice_up()
+						local _suit, _rank =
+							pseudorandom_element(SMODS.Suits).key, pseudorandom_element(SMODS.Ranks).card_key
+						SMODS.change_base(area[i], _suit, _rank)
+						area[i]:set_ability(SMODS.poll_enhancement())
+						area[i]:set_edition(poll_edition())
+					else
+						for i = 1, #G.P_CENTER_POOLS.Consumeables do
+							if G.P_CENTER_POOLS.Consumeables[i].set == set then
+								tab[#tab + 1] = G.P_CENTER_POOLS.Consumeables[i].key
+							end
+						end
+					end
+					if area[i] ~= keeporiginal then
+						area[i]:juice_up()
+						area[i]:set_ability(pseudorandom_element(tab))
+					end
+				end
+			end
+		else
+			if replace then --Doesnt stick to joker rarities
+				for i = 1, #area do
+					if bypass_eternal then
+						if area[i].ability.set and area[i] ~= keeporiginal then
+							local set = area[i].ability.set
+							SMODS.destroy_cards(area[i], true)
+							SMODS.add_card({
+								set = set,
+								area = G.pack_cards,
+							})
+						end
+					else
+						if area[i].ability.set and not area[i].ability.eternal and area[i] ~= keeporiginal then
+							local set = area[i].ability.set
+							SMODS.destroy_cards(area[i])
+							SMODS.add_card({
+								set = set,
+								area = G.pack_cards,
+							})
+						end
+					end
+				end
+			else
+				for i = 1, #area do
+					if bypass_eternal then
+						if area[i].config.center.rarity and area[i] ~= keeporiginal then --Reroll them while keeping the same rarity
+							local rarity
+							if area[i].config.center.rarity == 1 then
+								rarity = "Common"
+							elseif area[i].config.center.rarity == 2 then
+								rarity = "Uncommon"
+							elseif area[i].config.center.rarity == 3 then
+								rarity = "Rare"
+							elseif area[i].config.center.rarity == 4 then
+								rarity = "Legendary"
+							else
+								rarity = area[i].config.center.rarity
+							end
+							local set = area[i].ability.set
+							SMODS.destroy_cards(area[i], true)
+							SMODS.add_card({
+								set = set,
+								rarity = rarity,
+								area = G.pack_cards,
+							})
+						elseif area[i].ability.set and area[i] ~= keeporiginal then
+							if
+								area[i].ability.set == "Enhanced"
+								or area[i].ability.set == "Default"
+								or area[i].ability.set == "Playing Card"
+								or area == G.hand.cards
+							then
+								area[i]:juice_up()
+								local _suit, _rank =
+									pseudorandom_element(SMODS.Suits).key, pseudorandom_element(SMODS.Ranks).card_key
+								SMODS.change_base(area[i], _suit, _rank)
+								area[i]:set_ability(SMODS.poll_enhancement())
+								area[i]:set_edition(poll_edition())
+							else
+								for i = 1, #G.P_CENTER_POOLS.Consumeables do
+									if G.P_CENTER_POOLS.Consumeables[i].set == set then
+										tab[#tab + 1] = G.P_CENTER_POOLS.Consumeables[i].key
+									end
+								end
+							end
+							local set = area[i].ability.set
+							SMODS.destroy_cards(area[i], true)
+							SMODS.add_card({
+								set = set,
+								area = G.pack_cards,
+							})
+						end
+					else
+						if area[i].config.center.rarity and not area[i].ability.eternal and area[i] ~= keeporiginal then
+							local rarity
+							if area[i].config.center.rarity == 1 then
+								rarity = "Common"
+							elseif area[i].config.center.rarity == 2 then
+								rarity = "Uncommon"
+							elseif area[i].config.center.rarity == 3 then
+								rarity = "Rare"
+							elseif area[i].config.center.rarity == 4 then
+								rarity = "Legendary"
+							else
+								rarity = area[i].config.center.rarity
+							end
+							local set = area[i].ability.set
+							SMODS.destroy_cards(area[i])
+							SMODS.add_card({
+								set = set,
+								rarity = rarity,
+								area = G.pack_cards,
+							})
+						elseif area[i].ability.set and not area[i].ability.eternal and area[i] ~= keeporiginal then
+							if
+								area[i].ability.set == "Enhanced"
+								or area[i].ability.set == "Default"
+								or area[i].ability.set == "Playing Card"
+								or area == G.hand.cards
+							then
+								area[i]:juice_up()
+								local _suit, _rank =
+									pseudorandom_element(SMODS.Suits).key, pseudorandom_element(SMODS.Ranks).card_key
+								SMODS.change_base(area[i], _suit, _rank)
+								area[i]:set_ability(SMODS.poll_enhancement())
+								area[i]:set_edition(poll_edition())
+							else
+								for i = 1, #G.P_CENTER_POOLS.Consumeables do
+									if G.P_CENTER_POOLS.Consumeables[i].set == set then
+										tab[#tab + 1] = G.P_CENTER_POOLS.Consumeables[i].key
+									end
+								end
+							end
+							local set = area[i].ability.set
+							SMODS.destroy_cards(area[i])
+							SMODS.add_card({
+								set = set,
+								area = G.pack_cards,
+							})
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+-- Nothing to see here
+
+function Khonsu.check(check, area)
+	if check == "inblind" then
+		return G.STATE == G.STATES.SELECTING_HAND
+	elseif check == "hasjoker" then
+		if #G.jokers.cards > 0 then
+			return true
+		end
+	elseif check == "inshop" then
+		return G.STATE == G.STATES.SHOP
+	elseif check == "highlight" then
+		if #area.highlighted > 0 then
+			return #area.highlighted
+		end
+	end
+end
+
+function Khonsu.stickercheck(area, stickers)
+	local st = 0
+	if area then
+		for _, v in pairs(area) do
+			for i = 1, #stickers do
+				if v.stickers then
+				end
+			end
+		end
+		return st
+	end
+	return 0
+end
+
+function Khonsu.get_name(key, set)
+	local name
+	name = localize({ type = "name_text", key = key, set = set })
+	return name
+end
+
+--idk made an advanced searcg
+
+function Khonsu.joker_search(key, name, rarity, cost, edition, stickers, debuff, area)
+	if not area then
+		area = G.jokers.cards
+	end
+	local cards = {}
+	for i = 1, #area do
+		cards[#cards + 1] = area[i]
+	end
+	if key then
+		for k, v in pairs(cards) do
+			print(#cards)
+			if v.config.center.key ~= key then
+				local i = Khonsu.index(cards, v)
+				table.remove(cards, i)
+			end
+		end
+	end
+	if name then
+		for k, v in pairs(cards) do
+			local vsname = localize({ type = "name_text", key = v.config.center.key, set = "Joker" })
+			for i = 1, #name do
+				if not string.find(vsname, name[i]) then
+					local i = Khonsu.index(cards, v)
+					table.remove(cards, i)
+				end
+			end
+		end
+	end
+	if rarity then
+		for k, v in pairs(cards) do
+			if v.config.center.rarity ~= rarity then
+				local i = Khonsu.index(cards, v)
+				table.remove(cards, i)
+			end
+		end
+	end
+	if cost then
+		for k, v in pairs(cards) do
+			if v.cost ~= cost then
+				local i = Khonsu.index(cards, v)
+				table.remove(cards, i)
+			end
+		end
+	end
+	if edition then
+		for k, v in pairs(cards) do
+			if v.edition and not v.edition.key ~= edition then
+				local i = Khonsu.index(cards, v)
+				table.remove(cards, i)
+			end
+		end
+	end
+	if stickers then
+		for k, v in pairs(cards) do
+			for i = 1, #stickers do
+				if v.ability[stickers[i]] then
+					break
+				else
+					local i = Khonsu.index(cards, v)
+					table.remove(cards, i)
+				end
+			end
+		end
+	end
+	if debuff then
+		for k, v in pairs(cards) do
+			for i = 1, #stickers do
+				if v.debuff then
+					local i = Khonsu.index(cards, v)
+					table.remove(cards, i)
+				end
+			end
+		end
+	end
+	return cards
+end
+
+function Khonsu.message(_message,color,dont_localize)
+    if not color then color = "ATTENTION" end
+    if not dont_localize then
+    card_eval_status_text(card, "extra", nil, nil, nil, {message = localize(_message), colour = G.C[color]})
+    else
+    card_eval_status_text(card, "extra", nil, nil, nil, {message = _message, colour = G.C[color]})
+    end
+end

@@ -1,0 +1,15 @@
+{
+	"id": "khonsu",
+	"name": "Khonsu",
+	"display_name": "Khonsu",
+	"author": ["CodeRevo"],
+	"description": "An Egypt themed mod based arround Egypt Mythology",
+	"prefix": "khn",
+	"main_file": "main.lua",
+	"priority": 0,
+	"version": "0.0.0",
+	"dependencies": ["Steamodded (>=1.0.0~ALPHA-0716a)"],
+	"badge_colour": "ffffff",
+	"badge_text_colour": "eeba64",
+	"allow_redistribution": true
+}
