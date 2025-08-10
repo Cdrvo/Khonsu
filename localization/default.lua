@@ -13,9 +13,7 @@ return {
                     "{C:mult}+#2#{} Mult"
                 }
             },
-
             -- Uncommon
-
             j_khn_pyramids = {
                 name = "Great Pyramids of Giza",
                 text = {
@@ -24,7 +22,7 @@ return {
                     "played {C:attention}3{} or {C:attention}4{}",
                     "{C:inactive}(Currently {C:mult}+#2#{C:inactive} Mult and {C:chips}+#1#{C:inactive} Chips)"
                 }
-            }
+            },
         },
         Other={},
         Planet={},

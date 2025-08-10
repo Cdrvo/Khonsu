@@ -784,12 +784,3 @@ function Khonsu.joker_search(key, name, rarity, cost, edition, stickers, debuff,
 	end
 	return cards
 end
-
-function Khonsu.message(_message,color,dont_localize)
-    if not color then color = "ATTENTION" end
-    if not dont_localize then
-    card_eval_status_text(card, "extra", nil, nil, nil, {message = localize(_message), colour = G.C[color]})
-    else
-    card_eval_status_text(card, "extra", nil, nil, nil, {message = _message, colour = G.C[color]})
-    end
-end
