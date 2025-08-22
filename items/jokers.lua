@@ -459,4 +459,258 @@ SMODS.Joker({
 	end,
 })
 
+SMODS.Joker({
+	key = "ra",
+	atlas = "wip",
+	pos = { x = 2, y = 0 },
+	rarity = 3,
+	cost = 6,
+	config = {
+		extra = {
+			perma_c = 15,
+		},
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = { khn.perma_c },
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.individual and context.cardarea == G.play then
+			if context.other_card:get_id() == 14 then
+				context.other_card.ability.perma_bonus = context.other_card.ability.perma_bonus or 0
+				context.other_card.ability.perma_bonus = context.other_card.ability.perma_bonus + khn.perma_c
+
+				return {
+					extra = { message = localize("k_upgrade_ex"), colour = G.C.CHIPS },
+					card = card,
+				}
+			end
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "isis",
+	atlas = "wip",
+	pos = { x = 2, y = 0 },
+	rarity = 3,
+	cost = 6,
+	config = {
+		extra = {
+			perma_c = 15,
+		},
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = { khn.perma_c },
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.individual and context.cardarea == G.play then
+			if context.other_card:get_id() == 12 then
+				context.other_card.ability.perma_bonus = context.other_card.ability.perma_bonus or 0
+				context.other_card.ability.perma_bonus = context.other_card.ability.perma_bonus + khn.perma_c
+
+				return {
+					extra = { message = localize("k_upgrade_ex"), colour = G.C.CHIPS },
+					card = card,
+				}
+			end
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "osiris",
+	atlas = "wip",
+	pos = { x = 2, y = 0 },
+	rarity = 3,
+	cost = 6,
+	config = {
+		extra = {
+			perma_c = 15,
+		},
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = { khn.perma_c },
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.end_of_round and context.main_eval then
+			local ed = poll_edition(pseudorandom("osiris"), nil, true, true)
+			local enh = SMODS.poll_enhancement({guaranteed = true})
+			local se = SMODS.poll_seal({guaranteed = true})
+			Khonsu.random_card("King",nil,nil,enh,ed,se)
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "horus",
+	atlas = "wip",
+	pos = { x = 2, y = 0 },
+	rarity = 3,
+	cost = 6,
+	config = {
+		extra = {
+			perma_c = 15,
+		},
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = { khn.perma_c },
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.before then
+			for k, v in pairs(context.scoring_hand) do
+				if v:get_id() == 10 or v:get_id() == 11 then
+					Khonsu.upgrade(v,1)
+				end
+			end
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "thoth",
+	atlas = "wip",
+	pos = { x = 2, y = 0 },
+	rarity = 3,
+	cost = 6,
+	config = {
+		extra = {
+			perma_c = 15,
+		},
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = { khn.perma_c },
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.before then
+			Khonsu.level_up_hand(context.scoring_name,1)
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "bastet",
+	atlas = "wip",
+	pos = { x = 2, y = 0 },
+	rarity = 3,
+	cost = 6,
+	config = {
+		extra = {
+			perma_c = 15,
+		},
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = { khn.perma_c },
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.end_of_round and context.main_eval and G.GAME.blind.boss then
+			SMODS.add_card{
+				key = "j_khn_egyptian_cat",
+				edition = "e_negative"
+			}
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "sobek",
+	atlas = "wip",
+	pos = { x = 2, y = 0 },
+	rarity = 3,
+	cost = 6,
+	config = {
+		extra = {
+			perma_c = 15,
+		},
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = { khn.perma_c },
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.before and context.scoring_name == "Straight" then
+			Khonsu.level_up_hand("Straight",3)
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "anubis",
+	atlas = "wip",
+	pos = { x = 2, y = 0 },
+	rarity = 3,
+	cost = 6,
+	config = {
+		extra = {
+			perma_c = 15,
+		},
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = { khn.perma_c },
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.discard and not context.blueprint then
+			if context.other_card:get_id() <= 10 and context.other_card:get_id() >= 5 then
+				context.other_card:juice_up()
+				context.other_card:set_ability("m_glass")
+			end
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "set",
+	atlas = "wip",
+	pos = { x = 2, y = 0 },
+	rarity = 3,
+	cost = 6,
+	config = {
+		extra = {
+			perma_c = 15,
+		},
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = { khn.perma_c },
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.discard and not context.blueprint then
+			SMODS.destroy_cards(context.other_card)
+		end
+	end,
+})
+
 -- Legendary jokers

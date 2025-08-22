@@ -784,3 +784,71 @@ function Khonsu.joker_search(key, name, rarity, cost, edition, stickers, debuff,
 	end
 	return cards
 end
+
+function Khonsu.random_card(_rank, _suit, _area, _enhancement, _edition, _seal)
+	if not _area then
+		_area = G.deck
+	end
+
+	if not _rank then
+		_rank = pseudorandom_element(SMODS.Ranks).card_key
+	end
+
+	if not _suit then
+		_suit = pseudorandom_element(SMODS.Suits).key
+	end
+
+	if not _enhancement or not _enhancement == "None" then
+		local enh = SMODS.poll_enhancement()
+		if enh then
+			_enhancement = enh
+		end
+	end
+
+	if not _edition or not _enhancement == "None" then
+		local ed = poll_edition()
+		if ed then
+			_edition = ed
+		end
+	end
+
+	if not _seal or not _enhancement == "None" then
+		local se = SMODS.poll_seal()
+		if se then
+			_seal = se
+		end
+	end
+
+	SMODS.add_card({
+		set = "Playing Card",
+		rank = _rank,
+		suit = _suit,
+		enhancement = _enhancement,
+		edition = _edition,
+		seal = _seal,
+		area = _area,
+	})
+end
+
+function Khonsu.upgrade(card,by)
+	card:flip()
+	play_sound("card1")
+	G.E_MANAGER:add_event(Event({
+		trigger = "before",
+		delay = 1,
+		func = function()
+			SMODS.modify_rank(card, by)
+			return true
+		end,
+	}))
+	G.E_MANAGER:add_event(Event({
+		trigger = "after",
+		delay = 1,
+		func = function()
+			card:juice_up()
+			card:flip()
+			play_sound("card1")
+			return true
+		end,
+	}))
+end
