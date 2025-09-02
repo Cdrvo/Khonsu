@@ -397,6 +397,293 @@ SMODS.Joker({
         end
 	end,
 })
+
+SMODS.Joker({
+	key = "falcon",
+	atlas = "wip",
+	pos = { x = 1, y = 0 },
+	rarity = 2,
+	cost = 5,
+	config = {
+		extra = {
+            rep = 1
+        },
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = {khn.rep},
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.individual and context.cardarea == G.play and context.other_card:is_suit("Spades") then
+			if not card.ability.extra_value and card.ability.extra_value > 19 then
+				card.ability.extra_value = card.ability.extra_value or 0
+				card.ability.extra_value = card.ability.extra_value + khn.rep
+				card_eval_status_text(card, "extra", nil, nil, nil, { message = localize("k_val_up"), colour = G.C.ATTENTION })
+			else
+				SMODS.destroy_cards(card)
+			end
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "monkey",
+	atlas = "wip",
+	pos = { x = 1, y = 0 },
+	rarity = 2,
+	cost = 5,
+	config = {
+		extra = {
+            rep = 1
+        },
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = {khn.rep},
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.individual and context.cardarea == G.play and context.other_card:is_suit("Hearts") then
+			if not card.ability.extra_value and card.ability.extra_value > 19 then
+				card.ability.extra_value = card.ability.extra_value or 0
+				card.ability.extra_value = card.ability.extra_value + khn.rep
+				card_eval_status_text(card, "extra", nil, nil, nil, { message = localize("k_val_up"), colour = G.C.ATTENTION })
+			else
+				SMODS.destroy_cards(card)
+			end
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "human",
+	atlas = "wip",
+	pos = { x = 1, y = 0 },
+	rarity = 2,
+	cost = 5,
+	config = {
+		extra = {
+            rep = 1
+        },
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = {khn.rep},
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.individual and context.cardarea == G.play and context.other_card:is_suit("Diamonds") then
+			if not card.ability.extra_value and card.ability.extra_value > 19 then
+				card.ability.extra_value = card.ability.extra_value or 0
+				card.ability.extra_value = card.ability.extra_value + khn.rep
+				card_eval_status_text(card, "extra", nil, nil, nil, { message = localize("k_val_up"), colour = G.C.ATTENTION })
+			else
+				SMODS.destroy_cards(card)
+			end
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "jackal",
+	atlas = "wip",
+	pos = { x = 1, y = 0 },
+	rarity = 2,
+	cost = 5,
+	config = {
+		extra = {
+            rep = 1
+        },
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = {khn.rep},
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.individual and context.cardarea == G.play and context.other_card:is_suit("Clubs") then
+			if not card.ability.extra_value and card.ability.extra_value > 19 then
+				card.ability.extra_value = card.ability.extra_value or 0
+				card.ability.extra_value = card.ability.extra_value + khn.rep
+				card_eval_status_text(card, "extra", nil, nil, nil, { message = localize("k_val_up"), colour = G.C.ATTENTION })
+			else
+				SMODS.destroy_cards(card)
+			end
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "judgement_anubis",
+	atlas = "wip",
+	pos = { x = 1, y = 0 },
+	rarity = 2,
+	cost = 5,
+	config = {
+		extra = {
+            slipped = false
+        },
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = {khn.skipped},
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.skip_blind then
+			khn.skipped = true
+		end
+		if context.end_of_round and context.main_eval then
+			local tab = {}
+			for k, v in pairs(SMODS.Suits) do
+				tab[#tab+1] = v.card_key
+			end
+			pseudoshuffe(tab)
+			if khn.skipped then
+				for i = 1, 4 do
+					local dcard = pseudorandom_element(G.deck.cards)
+					SMODS.destroy_cards(dcard)
+				end
+				khn.skipped = false
+			else
+				for i = 1, 4 do
+					Khonsu.random_card("Ace", tab[i], G.deck)
+				end
+			end
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "scale_maat",
+	atlas = "wip",
+	pos = { x = 1, y = 0 },
+	rarity = 2,
+	cost = 5,
+	config = {
+		extra = {
+            slipped = false
+        },
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = {khn.skipped},
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.skip_blind then
+			khn.skipped = true
+		end
+		if context.end_of_round and context.main_eval then
+			local tab = {}
+			for k, v in pairs(SMODS.Suits) do
+				tab[#tab+1] = v.card_key
+			end
+			pseudoshuffe(tab)
+			if khn.skipped then
+				for i = 1, 4 do
+					local dcard = pseudorandom_element(G.deck.cards)
+					SMODS.destroy_cards(dcard)
+				end
+				khn.skipped = false
+			else
+				for i = 1, 4 do
+					Khonsu.random_card("King", tab[i], G.deck)
+				end
+			end
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "feather_truth",
+	atlas = "wip",
+	pos = { x = 1, y = 0 },
+	rarity = 2,
+	cost = 5,
+	config = {
+		extra = {
+            slipped = false
+        },
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = {khn.skipped},
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.skip_blind then
+			khn.skipped = true
+		end
+		if context.end_of_round and context.main_eval then
+			local tab = {}
+			for k, v in pairs(SMODS.Suits) do
+				tab[#tab+1] = v.card_key
+			end
+			pseudoshuffe(tab)
+			if khn.skipped then
+				for i = 1, 4 do
+					local dcard = pseudorandom_element(G.deck.cards)
+					SMODS.destroy_cards(dcard)
+				end
+				khn.skipped = false
+			else
+				for i = 1, 4 do
+					Khonsu.random_card("Queen", tab[i], G.deck)
+				end
+			end
+		end
+	end,
+})
+
+SMODS.Joker({
+	key = "ammit",
+	atlas = "wip",
+	pos = { x = 1, y = 0 },
+	rarity = 2,
+	cost = 5,
+	config = {
+		extra = {
+            slipped = false
+        },
+	},
+	loc_vars = function(self, info_queue, card)
+		local khn = card.ability.extra
+		return {
+			vars = {khn.skipped},
+		}
+	end,
+	calculate = function(self, card, context)
+		local khn = card.ability.extra
+		if context.skip_blind then
+			khn.skipped = true
+		end
+		if context.end_of_round and context.main_eval then
+			if not khn.skipped then
+				for i = 1, 4 do
+					local dcard = pseudorandom_element(G.deck.cards)
+					dcard:set_abilit("m_stone")
+				end
+			end
+		end
+	end,
+})
+
 -- Rare jokers
 
 SMODS.Joker({
